@@ -64,3 +64,6 @@ crates/docs_preprocessor/actions.json
 .ua/diff-overlay.json
 .ua/tmp/
 .ua/.trash-*/
+
+# Claude Skills (symlinked via script/setup-skills)
+.claude/skills/

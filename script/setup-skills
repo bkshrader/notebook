@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Links `.claude/skills` -> `.agents/skills` so that Claude Code discovers the
+# skills that live under `.agents/` (the canonical location shared with Zed's
+# agent). The symlink is not committed to git, so run this once after cloning.
+
+set -euo pipefail
+
+# Resolve the repo root from this script's location so it works regardless of
+# the current working directory.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+SOURCE="${REPO_ROOT}/.agents/skills"
+LINK="${REPO_ROOT}/.claude/skills"
+
+if [[ ! -d "$SOURCE" ]]; then
+    echo "ERROR: source directory does not exist: $SOURCE"
+    exit 1
+fi
+
+if [[ -L "$LINK" ]]; then
+    current="$(readlink "$LINK")"
+    if [[ "$current" == "$SOURCE" || "$current" == "../.agents/skills" ]]; then
+        echo ".claude/skills already links to .agents/skills"
+        exit 0
+    fi
+    echo "Replacing existing symlink .claude/skills (-> $current)"
+    rm "$LINK"
+elif [[ -e "$LINK" ]]; then
+    echo "ERROR: $LINK already exists and is not a symlink; refusing to overwrite"
+    echo "Move or remove it, then re-run this script."
+    exit 1
+fi
+
+mkdir -p "${REPO_ROOT}/.claude"
+
+# Use a relative target so the link stays valid if the repo is moved.
+ln -s "../.agents/skills" "$LINK"
+echo "Linked .claude/skills -> .agents/skills"

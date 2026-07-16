@@ -155,6 +155,15 @@ Release Notes:
 - N/A
 ```
 
+# Agent skills
+
+Project-scope agent skills live only under `.agents/skills/`. Write new or edited skills there — never author them directly under `.claude/skills/`.
+
+`.claude/skills/` is a link to `.agents/skills/` so Claude Code can discover them; the link is not committed to git. If `.claude/skills/` does not exist (for example, in a fresh clone), run the setup script to create it:
+
+- Windows: `./script/setup-skills.ps1`
+- Linux/macOS: `./script/setup-skills`
+
 # Crash Investigation
 
 ## Sentry Integration
