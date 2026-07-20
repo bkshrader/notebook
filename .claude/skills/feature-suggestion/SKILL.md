@@ -79,11 +79,27 @@ confirm or correct both the prefix and the name.
 
 ## Phase 4: Branch + draft PR
 
-Once the name is confirmed:
+Once the name is confirmed, do not check out the new branch in the current
+worktree — the user may be in the middle of unrelated work on whatever branch
+they're currently on, and this process shouldn't disturb it.
 
-1. Check `git status` — if the working tree isn't clean, stop and ask how to
-   proceed rather than switching branches over uncommitted work.
-2. Create the branch off `main`: `git checkout -b <prefix>/<name>`
+1. Run `git status` and check the current branch.
+   - If it shows `main`, clean, and not ahead of `origin/main` (i.e. even
+     with the remote, or merely behind), it's safe to create the branch in
+     place: `git fetch origin main`, fast-forward with `git pull` if behind,
+     then `git checkout -b <prefix>/<name>` (skip to step 3). Leaving this
+     new branch checked out afterward is fine.
+   - Otherwise — any branch other than `main`, uncommitted changes, or
+     `main` ahead of `origin/main` — do not touch the current worktree. Use
+     a separate worktree instead (step 2).
+2. Create the branch in a separate worktree so the current one is untouched:
+   ```
+   git fetch origin main
+   git worktree add <temp-path> -b <prefix>/<name> origin/main
+   ```
+   Run all subsequent git commands (commit, push) with `git -C <temp-path>
+   ...` or `cd`'d into that path — never `git checkout` the new branch into
+   the original worktree.
 3. Push it. GitHub requires at least one commit of difference to open a PR —
    if the branch has no changes yet, add an empty commit first:
    ```
@@ -93,13 +109,19 @@ Once the name is confirmed:
 
    Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
+   then `git push -u origin <prefix>/<name>`.
 4. Open a **draft** PR against `main` using `gh pr create --draft --body-file
    <path>`, pointing at that file rather than passing the body inline — this
    avoids shell-escaping issues with quotes/apostrophes in the PRD text.
    Title it by taking the PRD's title and replacing the word "PRD" with
    "Feature Suggestion" (if the title didn't contain "PRD," just use it as-is
    with a "Feature Suggestion:" prefix).
-5. Report back just the PR URL — no further narration needed.
+5. If a temporary worktree was created in step 2, remove it now that the
+   branch is pushed and the PR is open: `git worktree remove <temp-path>`.
+   The branch itself stays on the remote — only the local worktree checkout
+   is cleaned up. Confirm (e.g. `git status`) that the original worktree is
+   still on the same branch it started on before reporting back.
+6. Report back just the PR URL — no further narration needed.
 
 Do not implement any part of the feature itself at any point in this process.
 The deliverable is the draft PR, not code.
